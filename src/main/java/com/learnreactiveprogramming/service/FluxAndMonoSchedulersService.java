@@ -146,4 +146,107 @@ public class FluxAndMonoSchedulersService {
             .delayElements(Duration.ofMillis(delay));
     }
 
+    // CONCAT
+
+    public Flux<String> exploreConcat() {
+        Flux<String> abcFlux = Flux.just("A", "B", "C");
+        Flux<String> defFlux = Flux.just("D", "E", "F");
+
+        return Flux.concat(abcFlux, defFlux)
+            .log();
+    }
+
+    public Flux<String> exploreConcatWith() {
+        Flux<String> abcFlux = Flux.just("A", "B", "C");
+        Flux<String> defFlux = Flux.just("D", "E", "F");
+
+        return abcFlux.concatWith(defFlux)
+            .log();
+    }
+
+    public Flux<String> exploreConcatWithMono() {
+        Mono<String> aMono = Mono.just("A");
+        Flux<String> defFlux = Flux.just("D", "E", "F");
+
+        return aMono.concatWith(defFlux)
+            .log();
+    }
+
+    // MERGE
+
+    public Flux<String> exploreMerge() {
+        Flux<String> abcFlux = Flux.just("A", "B", "C")
+            .delayElements(Duration.ofMillis(100));
+        Flux<String> defFlux = Flux.just("D", "E", "F")
+            .delayElements(Duration.ofMillis(125));
+
+        return Flux.merge(abcFlux, defFlux)
+            .log();
+    }
+
+    public Flux<String> exploreMergeWith() {
+        Flux<String> abcFlux = Flux.just("A", "B", "C")
+            .delayElements(Duration.ofMillis(100));
+        Flux<String> defFlux = Flux.just("D", "E", "F")
+            .delayElements(Duration.ofMillis(125));
+
+        return abcFlux.mergeWith(defFlux)
+            .log();
+    }
+
+    public Flux<String> exploreMergeWithMono() {
+        Mono<String> aMono = Mono.just("A");
+        Flux<String> defFlux = Flux.just("D", "E", "F");
+
+        return aMono.mergeWith(defFlux)
+            .log();
+    }
+
+
+    public Flux<String> exploreMergeSequential() {
+        Flux<String> abcFlux = Flux.just("A", "B", "C")
+            .delayElements(Duration.ofMillis(100));
+        Flux<String> defFlux = Flux.just("D", "E", "F")
+            .delayElements(Duration.ofMillis(125));
+
+        return Flux.mergeSequential(abcFlux, defFlux)
+            .log();
+    }
+
+    public Flux<String> exploreZip() {
+        Flux<String> abcFlux = Flux.just("A", "B", "C");
+        Flux<String> defFlux = Flux.just("D", "E", "F");
+
+        return Flux.zip(abcFlux, defFlux, (first, second) -> String.join("", first, second))
+            .log();
+    }
+
+    public Flux<String> exploreZipLarge() {
+        Flux<String> abcFlux = Flux.just("A", "B", "C");
+        Flux<String> defFlux = Flux.just("D", "E", "F");
+
+        Flux<String> _123Flux = Flux.just("1", "2", "3");
+        Flux<String> _456Flux = Flux.just("4", "5", "6");
+
+        return Flux.zip(abcFlux, defFlux, _123Flux, _456Flux)
+            .map(tuple -> String.join("", tuple.getT1(), tuple.getT2(), tuple.getT3(), tuple.getT4()))
+            .log();
+    }
+
+    public Flux<String> exploreZipWith() {
+        Flux<String> abcFlux = Flux.just("A", "B", "C");
+        Flux<String> defFlux = Flux.just("D", "E", "F");
+
+        return abcFlux.zipWith(defFlux, (first, second) -> String.join("", first, second))
+            .log();
+    }
+
+    public Mono<String> exploreZipWithMono() {
+        Mono<String> aMono = Mono.just("A");
+        Mono<String> bMono = Mono.just("B");
+
+        return aMono.zipWith(bMono)
+            .map(tuple -> String.join("", tuple.getT1(), tuple.getT2()));
+    }
+
 }

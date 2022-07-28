@@ -106,12 +106,60 @@ public class FluxAndMonoGeneratorServiceTest {
             .expectNext("default")
             .verifyComplete();
     }
+
     @Test
     void namesFluxTransformSwitchIfEmpty() {
         var namesFluxMap = service.namesFluxTransformSwitchIfEmpty(6);
 
         StepVerifier.create(namesFluxMap)
             .expectNext("D", "E", "F", "A", "U", "L", "T")
+            .verifyComplete();
+    }
+
+    @Test
+    void exploreConcat() {
+        var exploreConcatFlux = service.exploreConcat();
+
+        StepVerifier.create(exploreConcatFlux)
+            .expectNext("A", "B", "C", "D", "E", "F")
+            .verifyComplete();
+    }
+
+    @Test
+    void exploreMerge() {
+        var flux = service.exploreMerge();
+
+        StepVerifier.create(flux)
+            .expectNext("A", "D", "B", "E", "C", "F")
+            .verifyComplete();
+    }
+
+    @Test
+    void exploreMergeSequential() {
+        var flux = service.exploreMergeSequential();
+
+        StepVerifier.create(flux)
+            .expectNext("A", "B", "C", "D", "E", "F")
+            .verifyComplete();
+    }
+
+    // ZIP
+
+    @Test
+    void exploreZip() {
+        var flux = service.exploreZip();
+
+        StepVerifier.create(flux)
+            .expectNext("AD", "BE", "CF")
+            .verifyComplete();
+    }
+
+    @Test
+    void exploreZipLarge() {
+        var flux = service.exploreZipLarge();
+
+        StepVerifier.create(flux)
+            .expectNext("AD14", "BE25", "CF36")
             .verifyComplete();
     }
 
