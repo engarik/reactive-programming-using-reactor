@@ -163,5 +163,14 @@ public class FluxAndMonoGeneratorServiceTest {
             .verifyComplete();
     }
 
+    @Test
+    void namesFluxDoOnNext() {
+        var namesFluxMap = service.namesDoOnNext(3);
+
+        StepVerifier.create(namesFluxMap)
+            .expectNext("4-ALEX", "5-CHLOE")
+            .verifyComplete();
+    }
+
 
 }

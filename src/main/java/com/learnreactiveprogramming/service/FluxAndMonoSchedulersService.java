@@ -249,4 +249,18 @@ public class FluxAndMonoSchedulersService {
             .map(tuple -> String.join("", tuple.getT1(), tuple.getT2()));
     }
 
+    // doOn callbacks
+
+    public Flux<String> namesDoOnNext(Integer length) {
+        return Flux.fromIterable(namesList)
+            .map(String::toUpperCase)
+            .filter(name -> name.length() > length)
+            .map(name -> name.length() + "-" + name)
+            .doOnNext(System.out::println)
+            .doOnSubscribe(subscription -> System.out.println("On subscription: " + subscription))
+            .doOnComplete(() -> System.out.println("On complete"))
+            .doFinally(signalType -> System.out.println("Do finally: " + signalType))
+            .log();
+    }
+
 }
