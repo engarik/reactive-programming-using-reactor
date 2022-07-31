@@ -5,9 +5,12 @@ import java.util.List;
 import com.learnreactiveprogramming.domain.Movie;
 import com.learnreactiveprogramming.domain.MovieInfo;
 import com.learnreactiveprogramming.domain.Review;
+import com.learnreactiveprogramming.exception.MovieException;
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+@Slf4j
 public class MovieReactiveService {
 
     private MovieInfoService movieInfoService;
@@ -28,6 +31,11 @@ public class MovieReactiveService {
 
                 return reviewsMono
                     .map(reviews -> new Movie(movieInfo, reviews));
+            })
+            .onErrorMap((exception) -> {
+                log.error("Exception is: ", exception);
+
+                return new MovieException(exception.getMessage());
             });
     }
 
