@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.learnreactiveprogramming.domain.Movie;
 import com.learnreactiveprogramming.domain.MovieInfo;
+import com.learnreactiveprogramming.domain.Revenue;
 import com.learnreactiveprogramming.domain.Review;
 import com.learnreactiveprogramming.exception.MovieException;
 import com.learnreactiveprogramming.exception.NetworkException;
@@ -13,19 +14,20 @@ import lombok.extern.slf4j.Slf4j;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 import reactor.util.retry.Retry;
-import reactor.util.retry.RetryBackoffSpec;
-import reactor.util.retry.RetrySpec;
 
 @Slf4j
 public class MovieReactiveService {
 
     private MovieInfoService movieInfoService;
     private ReviewService reviewService;
+    private RevenueService revenueService;
 
-    public MovieReactiveService(MovieInfoService movieInfoService, ReviewService reviewService) {
+    public MovieReactiveService(MovieInfoService movieInfoService, ReviewService reviewService, RevenueService revenueService) {
         this.movieInfoService = movieInfoService;
         this.reviewService = reviewService;
+        this.revenueService = revenueService;
     }
 
     public Flux<Movie> getAllMovies() {
@@ -150,5 +152,19 @@ public class MovieReactiveService {
         Mono<List<Review>> reviewFlux = reviewService.retrieveReviewsFlux(movieId).collectList();
 
         return movieInfoMono.zipWith(reviewFlux, Movie::new);
+    }
+
+    public Mono<Movie> getMovieById_withRevenue(Long movieId) {
+        Mono<MovieInfo> movieInfoMono = movieInfoService.retrieveMovieInfoMonoUsingId(movieId);
+        Mono<List<Review>> reviewFlux = reviewService.retrieveReviewsFlux(movieId).collectList();
+        Mono<Revenue> revenueMono = Mono.fromCallable(() -> revenueService.getRevenue(movieId))
+            .subscribeOn(Schedulers.boundedElastic());
+
+        return movieInfoMono
+            .zipWith(reviewFlux, Movie::new)
+            .zipWith(revenueMono, (movie, revenue) -> {
+                movie.setRevenue(revenue);
+                return movie;
+            });
     }
 }
