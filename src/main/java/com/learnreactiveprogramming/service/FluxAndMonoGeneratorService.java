@@ -2,15 +2,19 @@ package com.learnreactiveprogramming.service;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 import java.util.function.Function;
 
+import com.learnreactiveprogramming.exception.ReactorException;
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import static com.learnreactiveprogramming.util.CommonUtil.delay;
 
-public class FluxAndMonoSchedulersService {
+@Slf4j
+public class FluxAndMonoGeneratorService {
 
     static List<String> namesList = List.of("alex", "ben", "chloe");
     static List<String> namesList1 = List.of("adam", "jill", "jack");
@@ -21,7 +25,7 @@ public class FluxAndMonoSchedulersService {
     }
 
     public static void main(String[] args) {
-        FluxAndMonoSchedulersService service = new FluxAndMonoSchedulersService();
+        FluxAndMonoGeneratorService service = new FluxAndMonoGeneratorService();
 
         service.namesFlux()
             .subscribe(System.out::println);
@@ -260,6 +264,87 @@ public class FluxAndMonoSchedulersService {
             .doOnSubscribe(subscription -> System.out.println("On subscription: " + subscription))
             .doOnComplete(() -> System.out.println("On complete"))
             .doFinally(signalType -> System.out.println("Do finally: " + signalType))
+            .log();
+    }
+
+    // exception handling
+    public Flux<String> exceptionFlux() {
+        return Flux.just("A", "B", "C")
+            .concatWith(Flux.error(new RuntimeException("Exception occurred")))
+            .concatWith(Flux.just("D"))
+            .log();
+    }
+
+    public Flux<String> exceptionFlux_onErrorReturn() {
+        return Flux.just("A", "B", "C")
+            .concatWith(Flux.error(new RuntimeException("Exception occurred")))
+            .onErrorReturn("D")
+            .log();
+    }
+
+    public Flux<String> exceptionFlux_onErrorResume(Exception e) {
+        var recoveryFlux = Flux.just("D", "E", "F");
+
+        return Flux.just("A", "B", "C")
+            .concatWith(Flux.error(e))
+            .onErrorResume(exception -> {
+                log.error("Exception is ", exception);
+
+                if (exception instanceof IllegalStateException) {
+                    return recoveryFlux;
+                } else {
+                    return Flux.error(exception);
+                }
+            })
+            .log();
+    }
+
+    public Flux<String> exceptionFlux_onErrorContinue() {
+        return Flux.just("A", "B", "C")
+            .map((value) -> {
+                if (value.equals("B")) {
+                    throw new IllegalStateException("Illegal state");
+                }
+
+                return value;
+            })
+            .onErrorContinue((exception, value) -> {
+                log.error("Exception: ", exception);
+                log.info("Value: {}", value);
+            })
+            .log();
+    }
+
+    public Flux<String> exceptionFlux_onErrorMap() {
+        return Flux.just("A", "B", "C")
+            .map((value) -> {
+                if (value.equals("B")) {
+                    throw new IllegalStateException("Illegal state");
+                }
+
+                return value;
+            })
+            .onErrorMap(exception -> {
+                log.error("Exception: ", exception);
+
+                return new ReactorException(exception, exception.getMessage());
+            })
+            .log();
+    }
+
+    public Flux<String> exceptionFlux_doOnError() {
+        return Flux.just("A", "B", "C")
+            .concatWith(Flux.error(new RuntimeException("Exception occurred")))
+            .doOnError(exception -> log.error("Exception", exception))
+            .log();
+    }
+
+    public Mono<Object> exceptionMono() {
+        return Mono.just("A")
+            .map(value -> {
+                throw new RuntimeException("Exception");
+            })
+            .onErrorReturn("ABC")
             .log();
     }
 

@@ -2,12 +2,13 @@ package com.learnreactiveprogramming.service;
 
 import java.util.List;
 
+import com.learnreactiveprogramming.exception.ReactorException;
 import org.junit.jupiter.api.Test;
 import reactor.test.StepVerifier;
 
 public class FluxAndMonoGeneratorServiceTest {
 
-    FluxAndMonoSchedulersService service = new FluxAndMonoSchedulersService();
+    FluxAndMonoGeneratorService service = new FluxAndMonoGeneratorService();
 
     @Test
     void namesFlux() {
@@ -172,5 +173,104 @@ public class FluxAndMonoGeneratorServiceTest {
             .verifyComplete();
     }
 
+    // exception handling
+
+    @Test
+    void exceptionFlux() {
+        var exceptionFlux = service.exceptionFlux();
+
+        StepVerifier.create(exceptionFlux)
+            .expectNext("A", "B", "C")
+            .expectError(RuntimeException.class)
+            .verify();
+    }
+
+    @Test
+    void exceptionFluxOne() {
+        var exceptionFlux = service.exceptionFlux();
+
+        StepVerifier.create(exceptionFlux)
+            .expectNext("A", "B", "C")
+            .expectError()
+            .verify();
+    }
+
+    @Test
+    void exceptionFluxTwo() {
+        var exceptionFlux = service.exceptionFlux();
+
+        StepVerifier.create(exceptionFlux)
+            .expectNext("A", "B", "C")
+            .expectErrorMessage("Exception occurred")
+            .verify();
+    }
+
+    @Test
+    void exceptionFlux_onErrorReturn() {
+        var exceptionFlux = service.exceptionFlux_onErrorReturn();
+
+
+        StepVerifier.create(exceptionFlux)
+            .expectNext("A", "B", "C", "D")
+            .verifyComplete();
+    }
+
+    @Test
+    void exceptionFlux_onErrorResume() {
+        var e = new IllegalStateException("Not a valid state");
+        var exceptionFlux = service.exceptionFlux_onErrorResume(e);
+
+        StepVerifier.create(exceptionFlux)
+            .expectNext("A", "B", "C", "D", "E", "F")
+            .verifyComplete();
+    }
+
+    @Test
+    void exceptionFlux_onErrorResumeFail() {
+        var e = new RuntimeException("Runtime exception");
+        var exceptionFlux = service.exceptionFlux_onErrorResume(e);
+
+        StepVerifier.create(exceptionFlux)
+            .expectNext("A", "B", "C")
+            .verifyError(RuntimeException.class);
+    }
+
+    @Test
+    void exceptionFlux_onErrorContinue() {
+        var exceptionFlux = service.exceptionFlux_onErrorContinue();
+
+        StepVerifier.create(exceptionFlux)
+            .expectNext("A", "C")
+            .verifyComplete();
+    }
+
+    @Test
+    void exceptionFlux_onErrorMap() {
+        var exceptionFlux = service.exceptionFlux_onErrorMap();
+
+        StepVerifier.create(exceptionFlux)
+            .expectNext("A")
+            .expectError(ReactorException.class)
+            .verify();
+    }
+
+    @Test
+    void exceptionFlux_doOnError() {
+        var exceptionFlux = service.exceptionFlux_doOnError();
+
+        StepVerifier.create(exceptionFlux)
+            .expectNext("A", "B", "C")
+            .expectError(RuntimeException.class)
+            .verify();
+    }
+
+    @Test
+    void exceptionMono() {
+        var exceptionFlux = service.exceptionMono();
+
+        StepVerifier.create(exceptionFlux)
+            .expectNext("ABC")
+            .verifyComplete();
+    }
 
 }
